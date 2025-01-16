@@ -5,7 +5,6 @@ const tasks = {
           title: 'Persona development',
           description: 'Create users personas based on the research data to represent different user groups and their characteristics, goals, and behaviors...',
           tags: ['UX Stages'],
-          subtaskProgress: { completed: 3, total: 16 },
         },
       ],
       'Doing': [
@@ -14,16 +13,6 @@ const tasks = {
           title: 'User list menu',
           description: 'Create a brand identity system that includes a logo, typography, color palettes, and brand guidelines',
           tags: ['Review', 'Wireframe'],
-          subtaskProgress: { completed: 3, total: 16 },
-        },
-      ],
-      'In Review': [
-        {
-          id: 3,
-          title: 'First design concept',
-          description: 'Create a concept based on the research and insights gathered during the discovery phase of the project',
-          tags: ['Review', 'UI Design'],
-          subtaskProgress: { completed: 3, total: 4 },
         },
       ],
       'Done': [
@@ -32,7 +21,6 @@ const tasks = {
           title: 'Create foundation color',
           description: 'Create a brand identity system that includes a logo, typography, color palettes, and brand guidelines',
           tags: ['Design system'],
-          subtaskProgress: { completed: 10, total: 10 },
         },
       ],
     };
@@ -44,7 +32,6 @@ const tasks = {
         title,
         description,
         tags: tags.split(',').map(tag => tag.trim()),
-        subtaskProgress: { completed: 0, total: 0 },
       };
       tasks[status].push(newTask);
       return new Response(JSON.stringify(newTask), {
@@ -97,7 +84,7 @@ const tasks = {
     }
 
     export async function DELETE(request) {
-      const { taskId, status } = await request.json();
+      const { taskId } = await request.json();
       for (const taskStatus in tasks) {
         tasks[taskStatus] = tasks[taskStatus].filter(task => task.id !== taskId);
       }

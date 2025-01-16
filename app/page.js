@@ -1,9 +1,9 @@
 "use client";
     import { useState, useEffect } from 'react';
-    import { MagnifyingGlassIcon, PlusIcon, ChatBubbleLeftIcon, ArrowPathIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+    import { MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
     import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
-    function TaskCard({ task, index, onDelete, onEdit }) {
+    function TaskCard({ task, index, onDelete, onEdit, onClick }) {
       return (
         <Draggable draggableId={String(task.id)} index={index}>
           {(provided) => (
@@ -11,7 +11,8 @@
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
-              className="bg-white rounded-lg shadow p-4"
+              className="bg-white rounded-lg shadow p-4 cursor-pointer"
+              onClick={() => onClick(task)}
             >
               <div className="flex items-center mb-2">
                 {task.tags.map((tag, index) => (
@@ -24,40 +25,20 @@
                   <button onClick={() => onEdit(task)} className="text-gray-500 hover:text-gray-700 mr-2">
                     <PencilIcon className="h-4 w-4" />
                   </button>
-                  <button onClick={() => onDelete(task.id, task.status)} className="text-gray-500 hover:text-gray-700">
+                  <button onClick={() => onDelete(task.id)} className="text-gray-500 hover:text-gray-700">
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
               </div>
               <h3 className="font-semibold text-lg mb-1">{task.title}</h3>
               <p className="text-gray-600 text-sm mb-3">{task.description}</p>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center">
-                  <svg className="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                  </svg>
-                  <span className="text-sm text-gray-500">Sub task</span>
-                </div>
-                <span className="text-sm text-gray-500">{task.subtaskProgress.completed}/{task.subtaskProgress.total}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${(task.subtaskProgress.completed / task.subtaskProgress.total) * 100}%` }}></div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <ChatBubbleLeftIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  <span className="text-sm text-gray-500 mr-2">6</span>
-                  <ArrowPathIcon className="h-4 w-4 text-gray-500 mr-1" />
-                  <span className="text-sm text-gray-500">2</span>
-                </div>
-              </div>
             </div>
           )}
         </Draggable>
       );
     }
 
-    function TaskColumn({ title, tasks, setTasks, searchTerm, onDelete, onEdit }) {
+    function TaskColumn({ title, tasks, setTasks, searchTerm, onDelete, onEdit, onClick }) {
       const filteredTasks = tasks.filter(task =>
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,7 +66,7 @@
                 className="space-y-4"
               >
                 {filteredTasks.map((task, index) => (
-                  <TaskCard key={task.id} task={task} index={index} onDelete={onDelete} onEdit={onEdit} />
+                  <TaskCard key={task.id} task={task} index={index} onDelete={onDelete} onEdit={onEdit} onClick={onClick} />
                 ))}
                 {provided.placeholder}
               </div>
@@ -99,7 +80,6 @@
       const [tasks, setTasks] = useState({
         'To Do': [],
         'Doing': [],
-        'In Review': [],
         'Done': [],
       });
       const [newTask, setNewTask] = useState({
@@ -118,6 +98,8 @@
         tags: '',
         status: 'To Do',
       });
+      const [selectedTask, setSelectedTask] = useState(null);
+      const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
       useEffect(() => {
         const fetchTasks = async () => {
@@ -241,6 +223,16 @@
         }
       };
 
+      const handleTaskClick = (task) => {
+        setSelectedTask(task);
+        setIsDetailModalOpen(true);
+      };
+
+      const handleCloseDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedTask(null);
+      };
+
       return (
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="container mx-auto p-4">
@@ -270,6 +262,7 @@
                 searchTerm={searchTerm}
                 onDelete={handleDeleteTask}
                 onEdit={handleEditTask}
+                onClick={handleTaskClick}
               />
               <TaskColumn
                 title="Doing"
@@ -278,14 +271,7 @@
                 searchTerm={searchTerm}
                 onDelete={handleDeleteTask}
                 onEdit={handleEditTask}
-              />
-              <TaskColumn
-                title="In Review"
-                tasks={tasks['In Review']}
-                setTasks={setTasks}
-                searchTerm={searchTerm}
-                onDelete={handleDeleteTask}
-                onEdit={handleEditTask}
+                onClick={handleTaskClick}
               />
               <TaskColumn
                 title="Done"
@@ -294,6 +280,7 @@
                 searchTerm={searchTerm}
                 onDelete={handleDeleteTask}
                 onEdit={handleEditTask}
+                onClick={handleTaskClick}
               />
             </div>
 
@@ -319,7 +306,6 @@
                       <select className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="status" name="status" value={newTask.status} onChange={handleInputChange}>
                         <option value="To Do">To Do</option>
                         <option value="Doing">Doing</option>
-                        <option value="In Review">In Review</option>
                         <option value="Done">Done</option>
                       </select>
                     </div>
@@ -354,6 +340,28 @@
                       <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Update Task</button>
                     </div>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {isDetailModalOpen && selectedTask && (
+              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center">
+                <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">{selectedTask.title}</h2>
+                    <button onClick={handleCloseDetailModal} className="text-gray-500 hover:text-gray-700">
+                      <XMarkIcon className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <p className="text-gray-700 mb-4">{selectedTask.description}</p>
+                  <div className="flex items-center mb-2">
+                    {selectedTask.tags.map((tag, index) => (
+                      <span key={index} className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 mr-1">
+                        <span className="h-2 w-2 mr-1 rounded-full bg-green-500 inline-block"></span>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
